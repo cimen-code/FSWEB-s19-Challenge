@@ -48,3 +48,74 @@ Hedef:
   - Burada amacımız CORS hatası denilen bir problemi gözlemleyip bunun çözümünü tecrübe etmektir. React uygulamanızı 3200 portundan ayağa kaldırınız. 
   - Component'iniz üzerinde kendi yazdığınız endpointlerden biri olan http://localhost:3000/tweet/findByUserId adresine get requesti atınız. Gelen tweetleri ekrana bastırınız.
   - Karşılaştığınız CORS hatasını nasıl çözersiniz ?
+
+# Çözüm Notları
+
+## Çalıştırma
+
+Gereksinimler: Java 17, Maven, PostgreSQL, Node.js.
+
+```bash
+createdb workintech_s19_challenge
+psql -d workintech_s19_challenge -f database/schema.sql
+DB_USER=<postgres_kullanıcısı> DB_PASSWORD=<şifre> mvn spring-boot:run
+```
+
+API `http://localhost:3000` adresinde çalışır. Bağlantı ayarları `DB_URL`, `DB_USER`, `DB_PASSWORD` ortam değişkenleriyle verilir; şema `database/schema.sql` ile oluşturulur ve Hibernate yalnızca doğrular (`ddl-auto=validate`).
+
+```bash
+cd frontend
+npm ci
+npm run dev
+```
+
+React uygulaması `http://localhost:3200` adresinde çalışır.
+
+## Veritabanı
+
+| Tablo | Alanlar | İlişki / kısıt |
+|---|---|---|
+| `users` | `id`, `username`, `password_hash` | `username` benzersiz |
+| `tweets` | `id`, `user_id`, `content` | `user_id → users.id` (anonim tweet yok) |
+| `comments` | `id`, `user_id`, `tweet_id`, `content` | `tweet_id → tweets.id ON DELETE CASCADE` |
+| `tweet_likes` | `id`, `user_id`, `tweet_id` | `UNIQUE (user_id, tweet_id)`, cascade |
+| `retweets` | `id`, `user_id`, `tweet_id` | `UNIQUE (user_id, tweet_id)`, cascade |
+
+## Kimlik doğrulama ve yetkilendirme
+
+- `POST /register` ve `POST /login` herkese açıktır; gövde `{"username": "...", "password": "..."}`. Şifre 8–72 karakterdir ve BCrypt ile hash'lenerek saklanır.
+- Diğer tüm endpoint'ler Spring Security HTTP Basic ile korunur (stateless). README token zorunlu tutmadığı için JWT yerine bu en sade doğru yöntem seçildi; `/login` kimlik bilgisini doğrular ve kullanıcı `id`'sini döner.
+- İşlemi yapan kullanıcı her zaman kimlik doğrulamasından alınır, istek gövdesinden alınmaz.
+- Tweet'i yalnız sahibi güncelleyip silebilir. Yorumu yalnız yazarı güncelleyebilir; yorumu yazarı veya tweet sahibi silebilir. Like/dislike ve retweet işlemleri yalnız kullanıcının kendi kaydını etkiler; retweet'i yalnız retweet eden silebilir.
+
+## İstek biçimleri
+
+| Endpoint | Parametre / gövde |
+|---|---|
+| `POST /tweet` | `{"content": "..."}` (en fazla 280 karakter) |
+| `GET /tweet/findByUserId` | `?userId=1` |
+| `GET /tweet/findById` | `?id=1` |
+| `PUT /tweet/{id}` | `{"content": "..."}` |
+| `DELETE /tweet/{id}` | — |
+| `POST /comment/` | `{"tweetId": 1, "content": "..."}` |
+| `PUT /comment/{id}` | `{"content": "..."}` |
+| `DELETE /comment/{id}` | — |
+| `POST /like/`, `POST /dislike/` | `{"tweetId": 1}` |
+| `POST /retweet/` | `{"tweetId": 1}` |
+| `DELETE /retweet/{id}` | `{id}` retweet kaydının id'si |
+
+Hatalar tek merkezden (`GlobalExceptionHandler`) `{"status": ..., "message": "..."}` biçiminde döner: 400 geçersiz veri, 401 kimlik doğrulama yok, 403 sahiplik yok, 404 kayıt yok, 405/415 hatalı istek, 409 tekrar kayıt.
+
+## Testler
+
+```bash
+mvn test
+DB_USER=<postgres_kullanıcısı> mvn verify
+```
+
+- `mvn test`: Mockito ile unit testler (`*Test`), veritabanı gerekmez. JaCoCo raporu `target/site/jacoco/index.html`; METHOD kapsamı %30'un altına düşerse build başarısız olur.
+- `mvn verify`: ayrıca gerçek PostgreSQL üzerinde Spring Boot entegrasyon testleri (`*IT`) çalışır. Testler transaction içinde çalışıp geri alınır. Rapor: `target/site/jacoco-it/index.html`.
+
+## CORS
+
+React uygulaması `localhost:3200`, API `localhost:3000` üzerinde çalıştığı için tarayıcı bu iki adresi farklı origin kabul eder. İstek `Authorization` başlığı taşıdığından tarayıcı önce `OPTIONS` preflight isteği gönderir; API izin veren `Access-Control-Allow-Origin` başlığını dönmezse tarayıcı yanıtı engeller (`blocked by CORS policy`). Çözüm `SecurityConfig` içindeki `CorsConfigurationSource`: yalnız `http://localhost:3200` origin'ine, `GET` metoduna ve `Authorization` başlığına `/tweet/findByUserId` için izin verir. CORS filtresi Spring Security zincirinde kimlik doğrulamadan önce çalışır.
