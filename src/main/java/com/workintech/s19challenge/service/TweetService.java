@@ -1,5 +1,6 @@
 package com.workintech.s19challenge.service;
 
+import com.workintech.s19challenge.dto.TweetDetailResponse;
 import com.workintech.s19challenge.dto.TweetRequest;
 import com.workintech.s19challenge.dto.TweetResponse;
 
@@ -14,7 +15,7 @@ public interface TweetService {
 
     List<TweetResponse> findByUserId(Long userId);
 
-    TweetResponse findById(Long id);
+    TweetDetailResponse findById(Long id);
 
     TweetResponse update(
         Long id,

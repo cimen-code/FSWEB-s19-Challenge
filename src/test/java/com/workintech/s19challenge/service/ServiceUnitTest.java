@@ -179,14 +179,31 @@ class ServiceUnitTest {
 
         Tweet existing = tweet(user(1L, "alice"));
 
+        Comment comment = new Comment();
+        comment.setId(20L);
+        comment.setTweet(existing);
+        comment.setUser(user(2L, "bob"));
+        comment.setContent("Nice tweet");
+
         when(tweetRepository.findById(10L))
             .thenReturn(Optional.of(existing));
+        when(commentRepository.findByTweet_IdOrderByIdAsc(10L))
+            .thenReturn(List.of(comment));
+        when(tweetLikeRepository.countByTweet_Id(10L))
+            .thenReturn(3L);
+        when(retweetRepository.countByTweet_Id(10L))
+            .thenReturn(2L);
 
-        TweetResponse result =
+        TweetDetailResponse result =
             tweetService.findById(10L);
 
         assertEquals(10L, result.id());
         assertEquals("Original tweet", result.content());
+        assertEquals(1, result.comments().size());
+        assertEquals("Nice tweet", result.comments().get(0).content());
+        assertEquals("bob", result.comments().get(0).username());
+        assertEquals(3L, result.likeCount());
+        assertEquals(2L, result.retweetCount());
     }
 
     // 4. TweetService.update

@@ -1,8 +1,14 @@
 package com.workintech.s19challenge.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.workintech.s19challenge.entity.Comment;
+import com.workintech.s19challenge.entity.Retweet;
 import com.workintech.s19challenge.entity.Tweet;
+import com.workintech.s19challenge.entity.TweetLike;
 import com.workintech.s19challenge.entity.User;
+import com.workintech.s19challenge.repository.CommentRepository;
+import com.workintech.s19challenge.repository.RetweetRepository;
+import com.workintech.s19challenge.repository.TweetLikeRepository;
 import com.workintech.s19challenge.repository.TweetRepository;
 import com.workintech.s19challenge.repository.UserRepository;
 
@@ -43,6 +49,15 @@ class TweetFlowIT {
 
     @Autowired
     private TweetRepository tweetRepository;
+
+    @Autowired
+    private CommentRepository commentRepository;
+
+    @Autowired
+    private TweetLikeRepository tweetLikeRepository;
+
+    @Autowired
+    private RetweetRepository retweetRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -180,6 +195,49 @@ class TweetFlowIT {
             .andExpect(
                 jsonPath("$.passwordHash").doesNotExist()
             );
+    }
+
+    @Test
+    void findByIdReturnsCommentsAndCounts() throws Exception {
+
+        User owner = createUser();
+        User other = createUser();
+
+        Tweet tweet = createTweet(owner, "With details");
+
+        Comment comment = new Comment();
+        comment.setTweet(tweet);
+        comment.setUser(other);
+        comment.setContent("A comment");
+        commentRepository.saveAndFlush(comment);
+
+        TweetLike like = new TweetLike();
+        like.setTweet(tweet);
+        like.setUser(other);
+        tweetLikeRepository.saveAndFlush(like);
+
+        Retweet retweet = new Retweet();
+        retweet.setTweet(tweet);
+        retweet.setUser(other);
+        retweetRepository.saveAndFlush(retweet);
+
+        mockMvc.perform(
+            get("/tweet/findById")
+                .param("id", tweet.getId().toString())
+                .with(httpBasic(
+                    owner.getUsername(),
+                    PASSWORD
+                ))
+        )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.comments.length()").value(1))
+            .andExpect(jsonPath("$.comments[0].content").value("A comment"))
+            .andExpect(
+                jsonPath("$.comments[0].username")
+                    .value(other.getUsername())
+            )
+            .andExpect(jsonPath("$.likeCount").value(1))
+            .andExpect(jsonPath("$.retweetCount").value(1));
     }
 
     @Test

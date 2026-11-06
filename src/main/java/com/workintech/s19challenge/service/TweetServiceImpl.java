@@ -1,9 +1,14 @@
 package com.workintech.s19challenge.service;
 
+import com.workintech.s19challenge.dto.CommentResponse;
+import com.workintech.s19challenge.dto.TweetDetailResponse;
 import com.workintech.s19challenge.dto.TweetRequest;
 import com.workintech.s19challenge.dto.TweetResponse;
 import com.workintech.s19challenge.entity.Tweet;
 import com.workintech.s19challenge.entity.User;
+import com.workintech.s19challenge.repository.CommentRepository;
+import com.workintech.s19challenge.repository.RetweetRepository;
+import com.workintech.s19challenge.repository.TweetLikeRepository;
 import com.workintech.s19challenge.repository.TweetRepository;
 import com.workintech.s19challenge.repository.UserRepository;
 
@@ -20,13 +25,22 @@ public class TweetServiceImpl implements TweetService {
 
     private final TweetRepository tweetRepository;
     private final UserRepository userRepository;
+    private final CommentRepository commentRepository;
+    private final TweetLikeRepository tweetLikeRepository;
+    private final RetweetRepository retweetRepository;
 
     public TweetServiceImpl(
             TweetRepository tweetRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            CommentRepository commentRepository,
+            TweetLikeRepository tweetLikeRepository,
+            RetweetRepository retweetRepository) {
 
         this.tweetRepository = tweetRepository;
         this.userRepository = userRepository;
+        this.commentRepository = commentRepository;
+        this.tweetLikeRepository = tweetLikeRepository;
+        this.retweetRepository = retweetRepository;
     }
 
     @Override
@@ -74,9 +88,31 @@ public class TweetServiceImpl implements TweetService {
 
     @Override
     @Transactional(readOnly = true)
-    public TweetResponse findById(Long id) {
+    public TweetDetailResponse findById(Long id) {
 
-        return toResponse(findTweet(id));
+        Tweet tweet = findTweet(id);
+
+        List<CommentResponse> comments = commentRepository
+            .findByTweet_IdOrderByIdAsc(tweet.getId())
+            .stream()
+            .map(comment -> new CommentResponse(
+                comment.getId(),
+                tweet.getId(),
+                comment.getUser().getId(),
+                comment.getUser().getUsername(),
+                comment.getContent()
+            ))
+            .toList();
+
+        return new TweetDetailResponse(
+            tweet.getId(),
+            tweet.getUser().getId(),
+            tweet.getUser().getUsername(),
+            tweet.getContent(),
+            comments,
+            tweetLikeRepository.countByTweet_Id(tweet.getId()),
+            retweetRepository.countByTweet_Id(tweet.getId())
+        );
     }
 
     @Override

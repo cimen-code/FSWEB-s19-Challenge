@@ -1,5 +1,6 @@
 package com.workintech.s19challenge.controller;
 
+import com.workintech.s19challenge.dto.TweetDetailResponse;
 import com.workintech.s19challenge.dto.TweetRequest;
 import com.workintech.s19challenge.dto.TweetResponse;
 import com.workintech.s19challenge.service.TweetService;
@@ -42,7 +43,7 @@ public class TweetController {
     }
 
     @GetMapping("/findById")
-    public TweetResponse findById(
+    public TweetDetailResponse findById(
             @RequestParam Long id) {
 
         return tweetService.findById(id);
