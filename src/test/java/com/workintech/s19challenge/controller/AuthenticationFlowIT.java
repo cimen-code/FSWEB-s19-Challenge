@@ -152,6 +152,17 @@ class AuthenticationFlowIT {
     }
 
     @Test
+    void colonInUsernameReturns400() throws Exception {
+
+        mockMvc.perform(
+                post("/register")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(json("a:b", PASSWORD))
+            )
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void passwordLengthIsValidated() throws Exception {
 
         mockMvc.perform(

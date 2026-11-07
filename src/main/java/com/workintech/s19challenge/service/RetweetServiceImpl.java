@@ -82,7 +82,7 @@ public class RetweetServiceImpl implements RetweetService {
     @Override
     public void delete(Long id, String username) {
 
-        if (id == null || id <= 0) {
+        if (id <= 0) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
                 "ID must be positive"

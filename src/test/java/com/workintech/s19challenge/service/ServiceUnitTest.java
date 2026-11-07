@@ -119,9 +119,6 @@ class ServiceUnitTest {
 
         return retweet;
     }
-
-    // 1. TweetService.create
-
     @Test
     void tweetCreate() {
 
@@ -151,9 +148,6 @@ class ServiceUnitTest {
         verify(tweetRepository)
             .saveAndFlush(any(Tweet.class));
     }
-
-    // 2. TweetService.findByUserId
-
     @Test
     void tweetFindByUserId() {
 
@@ -171,9 +165,6 @@ class ServiceUnitTest {
         assertEquals(1, result.size());
         assertEquals(1L, result.get(0).userId());
     }
-
-    // 3. TweetService.findById
-
     @Test
     void tweetFindById() {
 
@@ -205,9 +196,6 @@ class ServiceUnitTest {
         assertEquals(3L, result.likeCount());
         assertEquals(2L, result.retweetCount());
     }
-
-    // 4. TweetService.update
-
     @Test
     void tweetUpdate() {
 
@@ -230,9 +218,6 @@ class ServiceUnitTest {
         assertEquals("Updated tweet", result.content());
         assertEquals("Updated tweet", existing.getContent());
     }
-
-    // 5. TweetService.delete
-
     @Test
     void tweetDelete() {
 
@@ -246,9 +231,6 @@ class ServiceUnitTest {
         verify(tweetRepository).delete(existing);
         verify(tweetRepository).flush();
     }
-
-    // 6. CommentService.create
-
     @Test
     void commentCreate() {
 
@@ -282,9 +264,6 @@ class ServiceUnitTest {
         assertEquals(2L, result.userId());
         assertEquals("Nice tweet", result.content());
     }
-
-    // 7. CommentService.update
-
     @Test
     void commentUpdate() {
 
@@ -310,9 +289,6 @@ class ServiceUnitTest {
         assertEquals("Edited comment", result.content());
         assertEquals("Edited comment", existing.getContent());
     }
-
-    // 8. CommentService.delete
-
     @Test
     void commentDeleteByTweetOwner() {
 
@@ -332,9 +308,6 @@ class ServiceUnitTest {
         verify(commentRepository).delete(existing);
         verify(commentRepository).flush();
     }
-
-    // 9. TweetLikeService.like
-
     @Test
     void likeCreate() {
 
@@ -363,9 +336,6 @@ class ServiceUnitTest {
         assertEquals(10L, result.tweetId());
         assertEquals(2L, result.userId());
     }
-
-    // 10. TweetLikeService.dislike
-
     @Test
     void likeRemove() {
 
@@ -389,9 +359,6 @@ class ServiceUnitTest {
         verify(tweetLikeRepository).delete(existing);
         verify(tweetLikeRepository).flush();
     }
-
-    // 11. RetweetService.create
-
     @Test
     void retweetCreate() {
 
@@ -420,9 +387,6 @@ class ServiceUnitTest {
         assertEquals(10L, result.tweetId());
         assertEquals(2L, result.userId());
     }
-
-    // 12. RetweetService.delete
-
     @Test
     void retweetDelete() {
 
@@ -439,9 +403,6 @@ class ServiceUnitTest {
         verify(retweetRepository).delete(existing);
         verify(retweetRepository).flush();
     }
-
-    // 13. AuthenticationService.register
-
     @Test
     void authenticationRegister() {
 
@@ -469,9 +430,6 @@ class ServiceUnitTest {
 
         verify(passwordEncoder).encode("password123");
     }
-
-    // 14. AuthenticationService.login
-
     @Test
     void authenticationLogin() {
 
@@ -496,9 +454,6 @@ class ServiceUnitTest {
             )
         );
     }
-
-    // 15. UserDetailsService.loadUserByUsername
-
     @Test
     void userDetailsLoad() {
 
@@ -525,9 +480,6 @@ class ServiceUnitTest {
                 )
         );
     }
-
-    // 16. Authorization and error branches
-
     private void assertStatus(
             HttpStatus expected,
             Executable action) {

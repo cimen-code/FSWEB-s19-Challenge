@@ -89,12 +89,7 @@ public class AuthenticationService {
         }
 
         User user = userRepository.findByUsername(username)
-            .orElseThrow(() ->
-                new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED,
-                    "Invalid username or password"
-                )
-            );
+            .orElseThrow();
 
         return new AuthResponse(
             user.getId(),

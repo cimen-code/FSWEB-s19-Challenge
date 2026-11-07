@@ -3,6 +3,7 @@ package com.workintech.s19challenge.exceptions;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,17 @@ class GlobalExceptionHandlerTest {
 
     private final GlobalExceptionHandler handler =
         new GlobalExceptionHandler();
+
+    @Test
+    void lostDeleteRaceReturns404() {
+
+        ResponseEntity<Map<String, Object>> response =
+            handler.handleAlreadyDeleted(
+                new OptimisticLockingFailureException("row deleted")
+            );
+
+        assertEquals(404, response.getStatusCode().value());
+    }
 
     @Test
     void responseStatusKeepsStatusAndReason() {

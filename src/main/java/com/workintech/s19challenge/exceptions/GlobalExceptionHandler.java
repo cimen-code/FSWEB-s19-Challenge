@@ -2,7 +2,10 @@ package com.workintech.s19challenge.exceptions;
 
 import jakarta.validation.ConstraintViolationException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -21,6 +24,9 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log =
+        LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<Map<String, Object>> handleStatus(
@@ -116,9 +122,25 @@ public class GlobalExceptionHandler {
             );
     }
 
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<Map<String, Object>> handleAlreadyDeleted(
+            OptimisticLockingFailureException exception) {
+
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(
+                Map.of(
+                    "status", 404,
+                    "message", "Record not found"
+                )
+            );
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleUnexpected(
             Exception exception) {
+
+        log.error("Unexpected error", exception);
 
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)

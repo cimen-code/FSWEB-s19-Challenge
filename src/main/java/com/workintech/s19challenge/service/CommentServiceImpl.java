@@ -119,7 +119,7 @@ public class CommentServiceImpl implements CommentService {
 
     private Comment findComment(Long id) {
 
-        if (id == null || id <= 0) {
+        if (id <= 0) {
             throw new ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
                 "ID must be positive"
